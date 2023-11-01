@@ -1,0 +1,33 @@
+name: CMake Ubuntu
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        images: ['gcc:12.3.0', 'gcc:13.2.0']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build
+      run: ./build.sh ${{ matrix.images }}
+
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ secrets.GCHR_USERNAME }}
+        password: ${{ secrets.GCHR_TOKEN }}
+
+    - uses: docker/build-push-action@v5
+      with:
+        push: true
+        tags: ghcr.io/pharchive/phare_debian/${{ matrix.images }}
